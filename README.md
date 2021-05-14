@@ -1,2 +1,2 @@
-# json-toolib
-tools library in json
+# MyPA : personnal assistant based on vba
+personnal asiistant for Excel users
