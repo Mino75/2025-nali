@@ -10,13 +10,18 @@
 <body>
   <div class="sidebar">
     <img src="logo.webp" alt="Logo" class="logo">
-    <h2> MyPa - мой па - 私のパ - 我爸- </h2>
-    <button data-screens="1">1 Screen</button>
-    <button data-screens="2">2 Screens</button>
-    <button data-screens="3">3 Screens</button>
-    <button data-screens="4">4 Screens</button>
-    <button data-screens="20">20 Screens</button>      
-    <button id="clear-cache-btn">Clear Cache</button>
+    <h2>MyPa - мой па - 私のパ - 我爸-</h2>
+    <!-- Hamburger icon for mobile -->
+    <span class="menu-toggle">&#9776;</span>
+    <!-- Wrap buttons inside a container -->
+    <div class="menu-items">
+      <button data-screens="1">1 Screen</button>
+      <button data-screens="2">2 Screens</button>
+      <button data-screens="3">3 Screens</button>
+      <button data-screens="4">4 Screens</button>
+      <button data-screens="20">20 Screens</button>      
+      <button id="clear-cache-btn">Clear Cache</button>
+    </div>
   </div>
   <div class="main" id="main-content">
     <!-- Screens will be generated here -->
