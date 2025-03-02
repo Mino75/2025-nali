@@ -1,0 +1,12 @@
+{
+    "name": "mypa",
+    "version": "1.0.0",
+    "description": "My Personal Assistant Offline App - node js Microservice",
+    "main": "servers.js",
+    "dependencies": {
+      "express": "^4.18.2"
+    },
+    "author": "Mino Randriamanivo",
+    "license": "MIT"
+  }
+  
