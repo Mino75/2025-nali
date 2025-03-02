@@ -83,3 +83,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
       
+
+      // Clear cache functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Cache clearing button listener
+  const clearCacheButton = document.getElementById('clear-cache-btn');
+  if (clearCacheButton) {
+    clearCacheButton.addEventListener('click', function() {
+      if ('caches' in window) {
+        caches.keys().then(function(cacheNames) {
+          return Promise.all(
+            cacheNames.map(function(cacheName) {
+              return caches.delete(cacheName);
+            })
+          );
+        }).then(function() {
+          alert('Cache cleared successfully!');
+        }).catch(function(err) {
+          console.error('Error clearing cache:', err);
+        });
+      } else {
+        alert('Cache API not supported in this browser.');
+      }
+    });
+  }
+});
