@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const option = document.createElement('option');
             option.value = url;
             // Display the URL without "https://"
-            option.text = url.replace(/^https:\/\//, '');
+            option.text = url.replace(/^https:\/\//, '').split('.')[0];
             select.appendChild(option);
           });
       
