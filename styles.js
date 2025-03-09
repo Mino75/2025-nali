@@ -1,233 +1,143 @@
+// styles.js
 (function() {
-  var css = `
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
-      background-color: #121212;
-      color: #fff;
-    }
-
-    /* Sidebar (Desktop Default) */
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 220px;
-      bottom: 0;
-      background: #1e1e1e;
-      padding: 10px;
+  const style = document.createElement('style');
+  style.innerHTML = `
+    /* Reset and global layout */
+    * {
       box-sizing: border-box;
-      color: #fff;
-      z-index: 1000;
+      margin: 0;
+      padding: 0;
     }
-
-    .sidebar .logo {
-      display: block;
-      margin: 0 auto 10px;
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+    body {
+      background-color: #121212;
+      color: #E0E0E0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 18px;
+      display: flex;
+      flex-direction: row;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #1F1F1F;
+      border: none;
+      border-radius: 8px;
+      color: #E0E0E0;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin: 10px;
+      padding: 15px 25px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background-color: #333333;
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    /* Sidebar styles */
+    #sidebar {
+      background: #333;
+      color: #fff;
+      width: 250px;
+      min-width: 250px;
+      height: 100vh;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    #sidebar h2 {
+      margin-bottom: 1em;
+    }
+    #sidebar button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    /* Logo style: circular cropped image */
+    #logo {
       width: 80px;
       height: 80px;
       border-radius: 50%;
       object-fit: cover;
+      margin-bottom: 15px;
+      align-self: center;
     }
-
-    .sidebar h2 {
-      font-size: 20px;
-      margin: 0 0 10px;
-      text-align: center;
-    }
-
-    /* Show buttons container on desktop */
-    .menu-items {
-      display: block;
-    }
-
-    .sidebar button {
-      display: block;
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 16px;
-      font-weight: bold;
+    /* Burger button: visible on mobile, hidden on desktop */
+    #burger-btn {
+      display: none;
+      background: none;
       border: none;
-      background: #ef6300;
+      font-size: 24px;
       color: #fff;
       cursor: pointer;
-      border-radius: 4px;
+      margin-bottom: 15px;
     }
-
-    .sidebar button:hover {
-      background: #d75c00;
-    }
-
-    /* Main Content Area (Desktop) */
-    .main {
-      margin-left: 240px;
-      padding: 10px;
+    /* Content area (map and results) */
+    #content {
+      flex: 1;
       height: 100vh;
-      overflow-y: auto;
-      box-sizing: border-box;
-      display: grid;
-      grid-gap: 10px;
-    }
-
-    /* Desktop Grid Layouts */
-    .grid-1 { display: grid; grid-template-columns: 1fr; grid-auto-rows: 100vh; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: 100vh; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 100vh; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 100vh; }
-    .grid-20 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: 250px;
-      height: 100vh;
-      overflow-y: auto;
-      align-content: start;
-    }
-
-    /* Screen Styling (applies to desktop) */
-    .screen {
       display: flex;
       flex-direction: column;
-      background: #2c2c2c;
-      border: 1px solid #444;
+    }
+    /* Adjusted heights: smaller map, larger results */
+    #map {
+      height: 45%;
+      border-radius: 8px;
+      margin: 10px;
+    }
+    #results {
       padding: 10px;
-      box-sizing: border-box;
-      border-radius: 4px;
+      background: #1E1E1E;
+      color: #E0E0E0;
+      margin: 10px;
+      border-radius: 8px;
+      height: 50%;
+      overflow-y: auto;
     }
-
-    .screen select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 8px;
-      font-size: 16px;
-      background: #006a7f;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
+    /* Compass display in sidebar */
+    #compassDisplay {
+      margin-top: 10px;
+      background: #222;
+      padding: 10px;
+      text-align: center;
     }
-
-    .screen iframe {
-      flex-grow: 1;
-      width: 100%;
-      border: none;
-    }
-
-    /* MOBILE-SPECIFIC STYLES */
-    @media only screen and (max-width: 768px) {
-      /* Convert sidebar into a top header */
-      .sidebar {
-        width: 100%;
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        top: 0;
-        left: 0;
-        padding: 5px 10px;
-        z-index: 1000;
-      }
-      
-      .sidebar .logo {
-        width: 40px;
-        height: 40px;
-        margin: 0;
-      }
-      
-      .sidebar h2 {
-        font-size: 16px;
-        margin: 0;
-        flex-grow: 1;
-        text-align: center;
-      }
-      
-      /* Hamburger icon visible on mobile */
-      .sidebar .menu-toggle {
-        font-size: 24px;
-        cursor: pointer;
-        user-select: none;
-      }
-      
-      /* Dropdown menu (hidden by default) */
-      .sidebar .menu-items {
-        display: none;
-        flex-direction: column;
-        position: absolute;
-        top: 50px;
-        left: 0;
-        width: 100%;
-        background: #1e1e1e;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-      }
-      
-      /* Mobile button styling */
-      .sidebar .menu-items button {
-        width: 100%;
-        margin: 0;
-        padding: 5px;
-        font-size: 12px;
-        border-bottom: 1px solid #333;
-      }
-      
-      /* Show dropdown when active */
-      .sidebar.active .menu-items {
-        display: flex;
-      }
-      
-      /* Adjust main content to start below the header */
-      .main {
-        margin: 0;
-        margin-top: 60px;
-        display: block;
-        overflow-y: auto;
-        height: calc(100vh - 60px);
-        padding: 5px;
-      }
-      
-      /* Adjust screens for mobile */
-      .screen {
-        width: 100%;
-        height: 700px;
-        margin-bottom: 10px;
-        padding: 5px;
-        display: flex;
+    /* Responsive adjustments for mobile */
+    @media (max-width: 768px) {
+      body {
         flex-direction: column;
       }
-      
-      .screen select {
+      #sidebar {
         width: 100%;
-        padding: 6px;
-        margin-bottom: 6px;
-        font-size: 14px;
+        height: auto;
+        transform: translateY(-100%);
+        transition: transform 0.3s ease;
       }
-    }
-
-    /* Hide hamburger and show full menu on larger screens */
-    @media only screen and (min-width: 769px) {
-      .menu-toggle {
-        display: none;
+      #sidebar.active {
+        transform: translateY(0);
       }
-      .menu-items {
+      #burger-btn {
         display: block;
-        position: static;
-        box-shadow: none;
+      }
+      #content {
+        height: calc(100vh - 50px);
+      }
+      #map {
+        height: 35%;
+      }
+      #results {
+        height: 60%;
       }
     }
   `;
-  
-  var style = document.createElement('style');
-  style.innerHTML = css;
   document.head.appendChild(style);
-
-  // Toggle dropdown menu on mobile when hamburger is clicked
-  document.addEventListener('DOMContentLoaded', function() {
-    var sidebar = document.querySelector('.sidebar');
-    var toggle = document.querySelector('.menu-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        sidebar.classList.toggle('active');
-      });
-    }
-  });
 })();

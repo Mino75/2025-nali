@@ -1,11 +1,15 @@
+// server.js
 const express = require('express');
 const app = express();
-const path = require('path');
+const port = process.env.PORT || 3000;
+const apiRoutes = require('./api');
 
-// Serve static files from the current directory
-app.use(express.static(path.join(__dirname)));
+// Utilisation des endpoints API sous le préfixe /api
+app.use('/api', apiRoutes);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// Servir tous les fichiers statiques depuis la racine
+app.use(express.static(__dirname));
+
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });

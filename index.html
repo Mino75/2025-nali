@@ -1,31 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyPa - My Personal Assistant</title>
+  <title>Nali - ナリ - Нали - 哪里</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Local Leaflet CSS -->
+  <link rel="stylesheet" href="leaflet.css" />
+  <!-- Custom styles injected via styles.js -->
   <script src="styles.js"></script>
-  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
-  <div class="sidebar">
-    <img src="logo.webp" alt="Logo" class="logo">
-    <h2>MyPa - мой па - 私のパ - 我爸-</h2>
-    <!-- Hamburger icon for mobile -->
-    <span class="menu-toggle">&#9776;</span>
-    <!-- Wrap buttons inside a container -->
-    <div class="menu-items">
-      <button data-screens="1">1 Screen</button>
-      <button data-screens="2">2 Screens</button>
-      <button data-screens="3">3 Screens</button>
-      <button data-screens="4">4 Screens</button>
-      <button data-screens="20">20 Screens</button>      
-      <button id="clear-cache-btn">Clear Cache</button>
+  <!-- Sidebar for controls -->
+  <nav id="sidebar">
+    <!-- Logo displayed as a circle -->
+    <img src="logo.webp" id="logo" alt="Logo">
+    <button id="burger-btn">&#9776;</button>
+    <h2> Nali Nav  - ナリ - Нали - 哪里</h2>
+    <button id="geolocBtn">Get Geolocation</button>
+    <button id="ipBtn">Get IP Address</button>
+    <button id="compassBtn">Start Compass</button>
+    <button id="stopCompassBtn" style="display:none;">Stop Compass</button>
+    <button id="startNavBtn">Start Online Navigation</button>
+    <button id="clearBtn">Clear All</button>
+    <div id="compassDisplay">
+      <p>Compass: <span id="compassValue">--°</span></p>
+    </div>
+  </nav>
+
+  <!-- Main content: Map and Results -->
+  <div id="content">
+    <div id="map"></div>
+    <div id="results">
+      <div id="geolocResult" style="white-space: pre-wrap;"></div>
+      <div id="ipResult" style="white-space: pre-wrap;"></div>
+      <div id="navResult" style="white-space: pre-wrap; font-family: monospace; padding: 10px;"></div>
+      <div id="historyList" style="white-space: pre-wrap; padding: 10px; border-top: 1px solid #555;"></div>
     </div>
   </div>
-  <div class="main" id="main-content">
-    <!-- Screens will be generated here -->
-  </div>
+
+  <!-- Local Leaflet JS -->
+  <script src="leaflet.js"></script>
+  <!-- IndexedDB functions -->
+  <script src="db.js"></script>
+  <!-- Main application code -->
   <script src="main.js"></script>
 </body>
 </html>

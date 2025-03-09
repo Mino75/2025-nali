@@ -1,14 +1,18 @@
-const LIVE_CACHE = 'character-trainer-v1';
-const TEMP_CACHE = 'character-trainer-temp-v1';
+const LIVE_CACHE = 'nali-v1';
+const TEMP_CACHE = 'nali-temp-v1';
 const ASSETS = [
   '/',
   '/index.html',
   '/styles.js',
   '/main.js',
-  '/authorized-sites.json',
+  '/db.js',
+  '/leaflet.css',
+  '/leaflet.js',
+  '/logo.webp',
+  '/land.geojson',
+  '/countries.geojson',
   '/manifest.json',
   '/favicon.ico',
-  '/logo.webp',
   '/icon-192x192.png',
   '/icon-512x512.png'
 ];
