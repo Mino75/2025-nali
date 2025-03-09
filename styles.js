@@ -18,7 +18,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-size: 18px;
       display: flex;
-      flex-direction: row;
+      flex-direction: row; /* Desktop: row layout */
     }
     h1 {
       font-size: 2.5rem;
@@ -42,7 +42,24 @@
     button:active {
       transform: translateY(0);
     }
-    /* Sidebar styles */
+
+    /* Burger button: hidden on desktop, visible on mobile */
+    #burger-btn {
+      display: none;
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      font-size: 24px;
+      color: #fff;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 4px;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10000;
+    }
+
+    /* Sidebar for desktop */
     #sidebar {
       background: #333;
       color: #fff;
@@ -53,7 +70,10 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      position: relative;
+      position: fixed;
+      left: 0;
+      top: 0;
+      transition: all 0.3s ease;
     }
     #sidebar h2 {
       margin-bottom: 1em;
@@ -72,34 +92,30 @@
       margin-bottom: 15px;
       align-self: center;
     }
-    /* Burger button: visible on mobile, hidden on desktop */
-    #burger-btn {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #fff;
-      cursor: pointer;
-      margin-bottom: 15px;
-    }
-    /* Content area (map and results) */
+
+    /* Content area (map and results) for desktop */
     #content {
+      margin-left: 250px; /* Leaves space for the sidebar on the left */
       flex: 1;
       height: 100vh;
       display: flex;
       flex-direction: column;
+      transition: margin-top 0.3s ease;
     }
-    /* Adjusted heights: smaller map, larger results */
+    /* Map container spanning full width of content */
     #map {
+      width: 100%;
       height: 45%;
       border-radius: 8px;
-      margin: 10px;
+      margin: 10px 0;
     }
+    /* Results container spanning full width */
     #results {
+      width: 100%;
       padding: 10px;
       background: #1E1E1E;
       color: #E0E0E0;
-      margin: 10px;
+      margin: 10px 0;
       border-radius: 8px;
       height: 50%;
       overflow-y: auto;
@@ -111,31 +127,42 @@
       padding: 10px;
       text-align: center;
     }
+
     /* Responsive adjustments for mobile */
     @media (max-width: 768px) {
       body {
-        flex-direction: column;
-      }
-      #sidebar {
-        width: 100%;
-        height: auto;
-        transform: translateY(-100%);
-        transition: transform 0.3s ease;
-      }
-      #sidebar.active {
-        transform: translateY(0);
+        flex-direction: column; /* Stacks sidebar and content vertically */
       }
       #burger-btn {
-        display: block;
+        display: block; /* Visible on mobile */
       }
+      /* Sidebar is hidden by default on mobile, becomes static in normal flow */
+      #sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        display: none; /* hidden by default */
+        order: 1;
+      }
+      #sidebar.active {
+        display: flex; /* shown when toggled */
+      }
+      /* Content takes full width and appears after sidebar */
       #content {
-        height: calc(100vh - 50px);
+        margin-left: 0; /* no left margin on mobile */
+        width: 100%;
+        order: 2;
+        height: auto;
       }
       #map {
+        width: 100%;
         height: 35%;
+        margin: 10px 0;
       }
       #results {
+        width: 100%;
         height: 60%;
+        margin: 10px 0;
       }
     }
   `;

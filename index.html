@@ -6,16 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Local Leaflet CSS -->
   <link rel="stylesheet" href="leaflet.css" />
-  <!-- Custom styles injected via styles.js -->
+  <!-- Injected styles via style.js -->
   <script src="styles.js"></script>
+  <link rel="manifest" href="manifest.json" />
 </head>
 <body>
+  <!-- Burger button placed outside the sidebar so it remains visible on mobile -->
+  <button id="burger-btn">&#9776;</button>
+
   <!-- Sidebar for controls -->
   <nav id="sidebar">
-    <!-- Logo displayed as a circle -->
     <img src="logo.webp" id="logo" alt="Logo">
-    <button id="burger-btn">&#9776;</button>
-    <h2> Nali Nav  - ナリ - Нали - 哪里</h2>
+    <h2>Nali Nav - ナリ - Нали - 哪里</h2>
     <button id="geolocBtn">Get Geolocation</button>
     <button id="ipBtn">Get IP Address</button>
     <button id="compassBtn">Start Compass</button>

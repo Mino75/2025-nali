@@ -129,11 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (persistedNav) {
     document.getElementById('navResult').textContent = persistedNav;
   }
-
-  // Sidebar toggle for mobile
+  
+  // Burger button toggle for mobile
   const burgerBtn = document.getElementById('burger-btn');
   const sidebar = document.getElementById('sidebar');
-  burgerBtn.addEventListener('click', () => sidebar.classList.toggle('active'));
+  burgerBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+  });
 
   // Elements for controls
   const geolocBtn = document.getElementById('geolocBtn');
@@ -188,18 +190,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentMarker;
   let historyMarkers = [];
 
-  // Update current position marker ("HERE") and add a small historical marker.
+  // Update current position marker ("HERE") and add a small history marker.
   // Also update persistent displays.
   function updatePosition(lat, lng, timestamp) {
     map.setView([lat, lng], 13);
-    if (currentMarker) { currentMarker.remove(); }
+    const timestampStr = new Date(timestamp).toLocaleString();
+    if (currentMarker) { 
+      currentMarker.remove(); 
+    }
     currentMarker = L.marker([lat, lng]).addTo(map)
-      .bindPopup(`<strong>HERE</strong><br>Latitude: ${lat}<br>Longitude: ${lng}<br>Timestamp: ${timestampStr}`).openPopup();
-    // Add a small history marker
+      .bindPopup(`<strong>HERE</strong><br>Latitude: ${lat}<br>Longitude: ${lng}<br>Timestamp: ${timestampStr}`)
+      .openPopup();
+
+    // Create a history marker
+    const historyMarker = L.circleMarker([lat, lng], {
+      radius: 4,
+      color: '#FF0000',
+      fillOpacity: 0.8
+    });
+    // Attach additional info as properties
     historyMarker.timestamp = timestamp;
     historyMarker.latitude = lat;
     historyMarker.longitude = lng;
-    // Add a click event so that when clicked, it shows its coordinates and timestamp
+    // When clicked, display its coordinates and timestamp in a popup
     historyMarker.on('click', function(e) {
       L.popup()
         .setLatLng(e.latlng)
@@ -208,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     historyMarker.addTo(map);
     historyMarkers.push(historyMarker);
+    
     // Save position to IndexedDB
     const positionRecord = { latitude: lat, longitude: lng, timestamp: timestamp };
     addPosition(positionRecord)
@@ -215,35 +229,43 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.error('DB Error:', err));
   }
 
-// Update the "History" display (placed at the bottom, below navigation)
-function updateDisplays() {
-  getAllPositions().then(positions => {
-    if (positions && positions.length > 0) {
-      // Sort positions by timestamp (newest first)
-      positions.sort((a, b) => b.timestamp - a.timestamp);
-      // Take only the 20 most recent positions
-      const recentPositions = positions.slice(0, 20);
-      let historyHTML = "*************** HISTORY ***************<br><br>";
-      recentPositions.forEach(pos => {
-        historyHTML += `Timestamp: ${new Date(pos.timestamp).toLocaleString()}<br>` +
-                       `Latitude: ${pos.latitude}<br>` +
-                       `Longitude: ${pos.longitude}<br><br>`;
-      });
-      historyListDiv.innerHTML = historyHTML;
-    } else {
-      historyListDiv.innerHTML = "No history available.<br>";
-    }
-  });
-}
+  // Update the "History" display (only the 20 most recent positions)
+  function updateDisplays() {
+    getAllPositions().then(positions => {
+      if (positions && positions.length > 0) {
+        positions.sort((a, b) => b.timestamp - a.timestamp);
+        const recentPositions = positions.slice(0, 20);
+        let historyHTML = "*************** HISTORY ***************<br><br>";
+        recentPositions.forEach(pos => {
+          historyHTML += `Timestamp: ${new Date(pos.timestamp).toLocaleString()}<br>` +
+                         `Latitude: ${pos.latitude}<br>` +
+                         `Longitude: ${pos.longitude}<br><br>`;
+        });
+        historyListDiv.innerHTML = historyHTML;
+      } else {
+        historyListDiv.innerHTML = "No history available.<br>";
+      }
+    });
+  }
 
   // Restore historical positions on load and update displays
   getAllPositions().then(records => {
     records.forEach(record => {
-      L.circleMarker([record.latitude, record.longitude], {
+      const marker = L.circleMarker([record.latitude, record.longitude], {
         radius: 4,
         color: '#FF0000',
         fillOpacity: 0.8
-      }).addTo(map);
+      });
+      marker.timestamp = record.timestamp;
+      marker.latitude = record.latitude;
+      marker.longitude = record.longitude;
+      marker.on('click', function(e) {
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent(`Coordinates: ${record.latitude.toFixed(5)}, ${record.longitude.toFixed(5)}<br>Timestamp: ${new Date(record.timestamp).toLocaleString()}`)
+          .openOn(map);
+      });
+      marker.addTo(map);
     });
     updateDisplays();
   }).catch(err => console.error('DB Error:', err));
@@ -271,34 +293,31 @@ function updateDisplays() {
     }
   });
 
-  // IP lookup button handler with section header and line breaks
- // IP lookup button handler with section header and line breaks
-ipBtn.addEventListener('click', () => {
-  ipResultDiv.innerHTML = "**************** IP LOOKUP **********************<br><br>";
-  
-  // First, call your local API endpoint
-  fetch('/api/ip')
-    .then(response => response.json())
-    .then(data => {
-      const currentTime = new Date().toLocaleString();
-      ipResultDiv.innerHTML += `Timestamp: ${currentTime}<br>`;
-      ipResultDiv.innerHTML += `Device / User Agent: ${getDeviceInfo()}<br>`;
-      ipResultDiv.innerHTML += `Local IP: ${data.ip}<br><br>`;
-      localStorage.setItem('ipResult', ipResultDiv.innerHTML);
-      // Then, call ipify to get the public IP
-      return fetch('https://api.ipify.org?format=json');
-    })
-    .then(response => response.json())
-    .then(data => {
-      ipResultDiv.innerHTML += `IPify Public IP: ${data.ip}<br><br>`;
-      localStorage.setItem('ipResult', ipResultDiv.innerHTML);
-    })
-    .catch(error => {
-      ipResultDiv.innerHTML += `Error: ${error.message}<br>`;
-      localStorage.setItem('ipResult', ipResultDiv.innerHTML);
-    });
-});
-
+  // IP lookup button handler with ipify alternative lookup
+  ipBtn.addEventListener('click', () => {
+    ipResultDiv.innerHTML = "**************** IP LOOKUP **********************<br><br>";
+    // First, call your local API endpoint
+    fetch('/api/ip')
+      .then(response => response.json())
+      .then(data => {
+        const currentTime = new Date().toLocaleString();
+        ipResultDiv.innerHTML += `Timestamp: ${currentTime}<br>`;
+        ipResultDiv.innerHTML += `Device / User Agent: ${getDeviceInfo()}<br>`;
+        ipResultDiv.innerHTML += `Local IP: ${data.ip}<br><br>`;
+        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
+        // Then, call ipify to get the public IP
+        return fetch('https://api.ipify.org?format=json');
+      })
+      .then(response => response.json())
+      .then(data => {
+        ipResultDiv.innerHTML += `IPify Public IP: ${data.ip}<br><br>`;
+        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
+      })
+      .catch(error => {
+        ipResultDiv.innerHTML += `Error: ${error.message}<br>`;
+        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
+      });
+  });
 
   // Compass controls: start and stop sensors
   compassBtn.addEventListener('click', () => {
