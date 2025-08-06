@@ -1,15 +1,104 @@
 // server.js
 const express = require('express');
 const app = express();
+const path = require('path');
+const fs = require('fs');
 const port = process.env.PORT || 3000;
 const apiRoutes = require('./api');
 
-// Utilisation des endpoints API sous le préfixe /api
+// Use api endpoints with préfixe /api
 app.use('/api', apiRoutes);
 
-// Servir tous les fichiers statiques depuis la racine
+// CACHE VERSION MANAGEMENT - Change this to deploy new version
+const CACHE_VERSION = process.env.CACHE_VERSION || 'v2';
+const APP_NAME = process.env.APP_NAME || 'nali';
+
+
+// Cache Lock Rescue - Intercept main.js to inject rescue code
+app.get('/main.js', (req, res) => {
+  try {
+    // Read the actual main.js file (your existing game/app code)
+    let jsContent = fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8');
+    
+    // Inject ONLY the rescue detection code at the beginning
+    const rescueCode = `
+// Cache Lock Rescue - Check for ${CACHE_VERSION} users and free older versions
+if ('serviceWorker' in navigator) {
+  caches.keys().then(cacheNames => {
+    const hasCurrentVersion = cacheNames.some(name => name.includes('-${CACHE_VERSION}'));
+    
+    if (!hasCurrentVersion && cacheNames.length > 0) {
+      // Old version detected - unregister and reload
+      console.log('Cache lock detected - rescuing to ${CACHE_VERSION}...');
+      navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg) {
+            reg.unregister().then(() => location.reload());
+          } else {
+            location.reload(); // ← This handles missing SW
+          }
+        }).catch(() => {
+          location.reload(); // ← This handles SW errors
+        });
+      //return; 
+    }
+    
+    // Current version users or new users - normal service worker registration
+    navigator.serviceWorker.register('/service-worker.js', {updateViaCache: 'none'});
+  });
+}
+`;
+    
+    // Prepend rescue code to your existing main.js
+    const finalContent = rescueCode + '\n\n' + jsContent;
+    
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(finalContent);
+    
+  } catch (error) {
+    console.error('Error serving main.js:', error);
+    res.status(500).send('Error loading main.js');
+  }
+});
+
+// Service Worker with cache-busting headers and version injection
+app.get('/service-worker.js', (req, res) => {
+  try {
+    // Read your service-worker.js file
+    let swContent = fs.readFileSync(path.join(__dirname, 'service-worker.js'), 'utf8');
+    
+    // Inject current version into service worker
+    const versionInjection = `
+// Version injected by server
+self.SW_CACHE_NAME = self.SW_CACHE_NAME || '${APP_NAME}-${CACHE_VERSION}';
+self.SW_TEMP_CACHE_NAME = self.SW_TEMP_CACHE_NAME || '${APP_NAME}-temp-${CACHE_VERSION}';
+self.SW_FIRST_TIME_TIMEOUT = '${process.env.SW_FIRST_TIME_TIMEOUT || '20000'}'; // Reduced from 30s
+self.SW_RETURNING_USER_TIMEOUT = '${process.env.SW_RETURNING_USER_TIMEOUT || '5000'}';
+self.SW_ENABLE_LOGS = '${process.env.SW_ENABLE_LOGS || 'true'}';
+`;
+    
+    swContent = versionInjection + '\n' + swContent;
+    
+    // Cache-busting headers
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.send(swContent);
+    
+  } catch (error) {
+    console.error('Error serving service worker:', error);
+    res.status(500).send('Error loading service worker');
+  }
+});
+
 app.use(express.static(__dirname));
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });
