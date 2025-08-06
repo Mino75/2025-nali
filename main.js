@@ -1,12 +1,5 @@
 // main.js
 
-// Register the Service Worker for offline functionality
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(registration => console.log('ServiceWorker registered:', registration))
-    .catch(error => console.log('ServiceWorker registration failed:', error));
-}
-
 // Global sensor variables for navigation info
 let lastOrientation = null;
 let lastMotion = null;
