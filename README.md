@@ -195,10 +195,6 @@ All rights reserved.
 - 🗺️ [Leaflet.js](https://leafletjs.com/) for the amazing mapping library
 - 👥 All contributors and users of this application
 
-## 📞 Support
-
-For issues and questions, please use the GitHub issue tracker or contact the maintainers.
-
 ---
 
 🌏 **那里 Nali** - Where in the world are you? 📍
