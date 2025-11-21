@@ -167,12 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Load offline layers (land and countries)
-  loadGeoJSON('land.geojson', {
-    color: "#999",
-    weight: 1,
-    fillColor: "#ccc",
-    fillOpacity: 0.5
-  }, 'name');
+//  loadGeoJSON('land.geojson', {
+//    color: "#999",
+//    weight: 1,
+//    fillColor: "#ccc",
+//    fillOpacity: 0.5
+//  }, 'name');
   loadGeoJSON('countries.geojson', {
     color: "#3388ff",
     weight: 1,
