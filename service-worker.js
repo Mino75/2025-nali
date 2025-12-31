@@ -78,7 +78,6 @@ const ASSETS = [
   '/index.html',
   '/styles.js',
   '/main.js',
-  '/db.js',
   '/leaflet.css',
   '/leaflet.js',
   '/logo.webp',
