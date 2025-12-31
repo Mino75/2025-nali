@@ -1,445 +1,245 @@
-// main.js
-
-// ================== IndexedDB Layer (ex-db.js) ==================
-
-const DB_NAME = 'PositionDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'positions';
-
+// ================== IndexedDB ==================
+const DB_NAME='PositionDB';
+const DB_VERSION=1;
+const STORE='positions';
 let db;
 
-function openDB() {
-  return new Promise((resolve, reject) => {
-    if (db) {
-      resolve(db);
-    } else {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = event => reject(event.target.error);
-      request.onsuccess = event => {
-        db = event.target.result;
-        resolve(db);
-      };
-      request.onupgradeneeded = event => {
-        db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'timestamp' });
-        }
-      };
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    if(db) return resolve(db);
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onerror=e=>reject(e.target.error);
+    req.onsuccess=e=>{db=e.target.result;resolve(db);}
+    req.onupgradeneeded=e=>{
+      db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE))
+        db.createObjectStore(STORE,{keyPath:'timestamp'});
     }
   });
 }
 
-function addPosition(position) {
-  return openDB().then(db => {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.add(position);
-      req.onsuccess = () => resolve();
-      req.onerror = event => reject(event.target.error);
-    });
-  });
+function addPosition(p){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).add(p).onsuccess=res;
+    tx.onerror=e=>rej(e.target.error);
+  }));
 }
 
-function getAllPositions() {
-  return openDB().then(db => {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = event => reject(event.target.error);
-    });
-  });
+function getAllPositions(){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readonly');
+    const req=tx.objectStore(STORE).getAll();
+    req.onsuccess=()=>res(req.result);
+    req.onerror=e=>rej(e.target.error);
+  }));
 }
 
-function getLatestPosition() {
-  return getAllPositions().then(positions => {
-    if (!positions || positions.length === 0) return null;
-    positions.sort((a, b) => b.timestamp - a.timestamp);
-    return positions[0];
-  });
+function clearPositions(){
+  return openDB().then(db=>new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).clear().onsuccess=res;
+    tx.onerror=e=>rej(e.target.error);
+  }));
 }
 
-function clearPositions() {
-  return openDB().then(db => {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.clear();
-      req.onsuccess = () => resolve();
-      req.onerror = event => reject(event.target.error);
-    });
-  });
+// ================== Sensors & Globals ==================
+let lastOrientation=null;
+let lastMotion=null;
+let batteryStatus=null;
+
+if(navigator.getBattery){
+  navigator.getBattery().then(b=>batteryStatus=b);
 }
 
-
-// Global sensor variables for navigation info
-let lastOrientation = null;
-let lastMotion = null;
-let batteryStatus = null;
-
-// Request battery info (if supported)
-if (navigator.getBattery) {
-  navigator.getBattery().then(battery => {
-    batteryStatus = battery;
-  });
-}
-
-// Handle device orientation events
-function handleOrientation(event) {
-  lastOrientation = {
-    alpha: event.alpha,
-    beta: event.beta,
-    gamma: event.gamma
-  };
-  if (compassOverlay) {
-    const heading = Math.round(event.alpha);
-    compassOverlay.style.transform = `rotate(${-heading}deg)`;
-    compassOverlay.textContent = `${heading}°`;
-    // Persist the compass value
-    localStorage.setItem('compassValue', `${heading}°`);
+function handleOrientation(e){
+  lastOrientation={alpha:e.alpha,beta:e.beta,gamma:e.gamma};
+  const heading=Math.round(e.alpha||0);
+  const overlay=document.getElementById("compassOverlay");
+  if(overlay){
+    overlay.style.transform=`rotate(${-heading}deg)`;
+    overlay.textContent=`${heading}°`;
   }
+  localStorage.setItem("compassValue",`${heading}°`);
 }
 
-// Handle device motion events
-function handleMotion(event) {
-  lastMotion = {
-    acceleration: event.acceleration,
-    rotationRate: event.rotationRate,
-    interval: event.interval
+function handleMotion(e){
+  lastMotion={
+    acceleration:e.acceleration,
+    rotationRate:e.rotationRate,
+    interval:e.interval
   };
 }
 
-// Start sensor listeners
-function startSensors() {
-  window.addEventListener('deviceorientation', handleOrientation);
-  window.addEventListener('devicemotion', handleMotion);
+function startSensors(){
+  window.addEventListener("deviceorientation",handleOrientation);
+  window.addEventListener("devicemotion",handleMotion);
 }
 
-// Stop sensor listeners
-function stopSensors() {
-  window.removeEventListener('deviceorientation', handleOrientation);
-  window.removeEventListener('devicemotion', handleMotion);
+function stopSensors(){
+  window.removeEventListener("deviceorientation",handleOrientation);
+  window.removeEventListener("devicemotion",handleMotion);
+  localStorage.setItem("compassValue","--°");
+  const overlay=document.getElementById("compassOverlay");
+  if(overlay){
+    overlay.textContent="--°";
+    overlay.style.transform="rotate(0deg)";
+  }
 }
 
-// Create a compass overlay on the top right if it doesn't exist
-let compassOverlay = document.getElementById('compassOverlay');
-if (!compassOverlay) {
-  compassOverlay = document.createElement('div');
-  compassOverlay.id = 'compassOverlay';
-  // Style: 80x80 circular overlay
-  compassOverlay.style.position = 'fixed';
-  compassOverlay.style.top = '10px';
-  compassOverlay.style.right = '10px';
-  compassOverlay.style.width = '80px';
-  compassOverlay.style.height = '80px';
-  compassOverlay.style.backgroundColor = 'rgba(255,255,255,0.8)';
-  compassOverlay.style.borderRadius = '50%';
-  compassOverlay.style.display = 'flex';
-  compassOverlay.style.alignItems = 'center';
-  compassOverlay.style.justifyContent = 'center';
-  compassOverlay.style.fontSize = '20px';
-  compassOverlay.style.zIndex = '9999';
-  // Restore persisted compass value if available
-  const storedCompass = localStorage.getItem('compassValue');
-  compassOverlay.textContent = storedCompass ? storedCompass : '--°';
-  document.body.appendChild(compassOverlay);
+// ================== MAP ==================
+const map=L.map('map').setView([20,0],2);
+
+fetch('countries.geojson')
+.then(r=>r.json())
+.then(data=>{
+  L.geoJSON(data,{color:"#3388ff",weight:1,fillOpacity:0.2}).addTo(map);
+});
+
+let currentMarker;
+let historyMarkers=[];
+
+function updatePosition(lat,lng,timestamp){
+  map.setView([lat,lng],13);
+  if(currentMarker) currentMarker.remove();
+  currentMarker=L.marker([lat,lng]).addTo(map)
+    .bindPopup(`<strong>HERE</strong><br>${lat},${lng}`).openPopup();
+
+  const m=L.circleMarker([lat,lng],{radius:4,color:"#ff0000",fillOpacity:.8});
+  m.addTo(map);
+  historyMarkers.push(m);
+
+  addPosition({latitude:lat,longitude:lng,timestamp})
+    .catch(e=>console.error(e));
 }
 
-// Update navigation info every 1 second and persist it
-setInterval(() => {
-  let navInfo = "**************** NAVIGATION ****************\n";
-  if (lastOrientation) {
-    navInfo += `Compass Heading: ${Math.round(lastOrientation.alpha)}°\n`;
-    navInfo += `Beta: ${Math.round(lastOrientation.beta)}°\n`;
-    navInfo += `Gamma: ${Math.round(lastOrientation.gamma)}°\n`;
-  } else {
-    navInfo += "Compass: N/A\n";
-  }
-  if (lastMotion && lastMotion.acceleration) {
-    navInfo += `Acceleration: x=${lastMotion.acceleration.x?.toFixed(2) || "N/A"}\n`;
-    navInfo += `             y=${lastMotion.acceleration.y?.toFixed(2) || "N/A"}\n`;
-    navInfo += `             z=${lastMotion.acceleration.z?.toFixed(2) || "N/A"}\n`;
-    if (lastMotion.rotationRate) {
-      navInfo += `Rotation Rate: alpha=${lastMotion.rotationRate.alpha?.toFixed(2) || "N/A"}\n`;
-      navInfo += `               beta=${lastMotion.rotationRate.beta?.toFixed(2) || "N/A"}\n`;
-      navInfo += `               gamma=${lastMotion.rotationRate.gamma?.toFixed(2) || "N/A"}\n`;
-    }
-  } else {
-    navInfo += "Motion: N/A\n";
-  }
-  if (batteryStatus) {
-    navInfo += `Battery: ${Math.round(batteryStatus.level * 100)}%\n`;
-  } else {
-    navInfo += "Battery: N/A\n";
-  }
-  const navResultDiv = document.getElementById('navResult');
-  if (navResultDiv) {
-    navResultDiv.textContent = navInfo;
-    localStorage.setItem('navResult', navInfo);
-  }
-}, 1000);
+// ================== UI ==================
+document.addEventListener("DOMContentLoaded",()=>{
 
-// Wait for the DOM to load
-document.addEventListener('DOMContentLoaded', () => {
-  // Restore persisted values if available
-  const persistedGeoloc = localStorage.getItem('geolocResult');
-  if (persistedGeoloc) {
-    document.getElementById('geolocResult').innerHTML = persistedGeoloc;
-  }
-  const persistedIp = localStorage.getItem('ipResult');
-  if (persistedIp) {
-    document.getElementById('ipResult').innerHTML = persistedIp;
-  }
-  const persistedNav = localStorage.getItem('navResult');
-  if (persistedNav) {
-    document.getElementById('navResult').textContent = persistedNav;
-  }
-  
-  // Burger button toggle for mobile
-  const burgerBtn = document.getElementById('burger-btn');
-  const sidebar = document.getElementById('sidebar');
-  burgerBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('active');
-  });
+  // Restore compass
+  const cv=localStorage.getItem("compassValue");
+  if(cv) document.getElementById("compassOverlay").textContent=cv;
 
-  // Elements for controls
-  const geolocBtn = document.getElementById('geolocBtn');
-  const ipBtn = document.getElementById('ipBtn');
-  const compassBtn = document.getElementById('compassBtn');
-  const stopCompassBtn = document.getElementById('stopCompassBtn');
-  const startNavBtn = document.getElementById('startNavBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const geolocResultDiv = document.getElementById('geolocResult');
-  const ipResultDiv = document.getElementById('ipResult');
-  const historyListDiv = document.getElementById('historyList');
+  const modal=document.getElementById("controlModal");
+  const burger=document.getElementById("burger-btn");
+  const closeModal=document.getElementById("closeModal");
+  const dataDisplay=document.getElementById("dataDisplay");
 
-  // Utility: Get full user agent string
-  function getDeviceInfo() {
-    return navigator.userAgent;
-  }
+  burger.onclick=()=>modal.style.display="block";
+  closeModal.onclick=()=>modal.style.display="none";
+  window.onclick=e=>{if(e.target===modal)modal.style.display="none"};
 
-  // Initialize the Leaflet map centered globally
-  const map = L.map('map').setView([20, 0], 2);
+  // Buttons
+  document.getElementById("geolocBtn").onclick=()=>{
+    if(!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const t=Date.now();
+      const lat=pos.coords.latitude;
+      const lng=pos.coords.longitude;
 
-  // Function to load GeoJSON layers
-  function loadGeoJSON(url, styleOptions, popupField) {
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        L.geoJSON(data, {
-          style: styleOptions,
-          onEachFeature: (feature, layer) => {
-            if (feature.properties && feature.properties[popupField]) {
-              layer.bindPopup(`<strong>${feature.properties[popupField]}</strong>`);
-            }
-          }
-        }).addTo(map);
-      })
-      .catch(error => console.error(`Error loading ${url}:`, error));
-  }
+      let txt=
+`****************************** GEOLOCATION ******************************
 
-  // Load offline layers (land and countries)
-//  loadGeoJSON('land.geojson', {
-//    color: "#999",
-//    weight: 1,
-//    fillColor: "#ccc",
-//    fillOpacity: 0.5
-//  }, 'name');
-  loadGeoJSON('countries.geojson', {
-    color: "#3388ff",
-    weight: 1,
-    fillOpacity: 0.2
-  }, 'name');
-
-  // Markers for current and historical positions
-  let currentMarker;
-  let historyMarkers = [];
-
-  // Update current position marker ("HERE") and add a small history marker.
-  // Also update persistent displays.
-  function updatePosition(lat, lng, timestamp) {
-    map.setView([lat, lng], 13);
-    const timestampStr = new Date(timestamp).toLocaleString();
-    if (currentMarker) { 
-      currentMarker.remove(); 
-    }
-    currentMarker = L.marker([lat, lng]).addTo(map)
-      .bindPopup(`<strong>HERE</strong><br>Latitude: ${lat}<br>Longitude: ${lng}<br>Timestamp: ${timestampStr}`)
-      .openPopup();
-
-    // Create a history marker
-    const historyMarker = L.circleMarker([lat, lng], {
-      radius: 4,
-      color: '#FF0000',
-      fillOpacity: 0.8
+Timestamp: ${new Date(t).toLocaleString()}
+Device / User Agent: ${navigator.userAgent}
+Latitude: ${lat}
+Longitude: ${lng}
+`;
+      localStorage.setItem("geolocResult",txt);
+      updatePosition(lat,lng,t);
     });
-    // Attach additional info as properties
-    historyMarker.timestamp = timestamp;
-    historyMarker.latitude = lat;
-    historyMarker.longitude = lng;
-    // When clicked, display its coordinates and timestamp in a popup
-    historyMarker.on('click', function(e) {
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(`Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}<br>Timestamp: ${timestampStr}`)
-        .openOn(map);
-    });
-    historyMarker.addTo(map);
-    historyMarkers.push(historyMarker);
-    
-    // Save position to IndexedDB
-    const positionRecord = { latitude: lat, longitude: lng, timestamp: timestamp };
-    addPosition(positionRecord)
-      .then(() => updateDisplays())
-      .catch(err => console.error('DB Error:', err));
-  }
+  };
 
-  // Update the "History" display (only the 20 most recent positions)
-  function updateDisplays() {
-    getAllPositions().then(positions => {
-      if (positions && positions.length > 0) {
-        positions.sort((a, b) => b.timestamp - a.timestamp);
-        const recentPositions = positions.slice(0, 20);
-        let historyHTML = "*************** HISTORY ***************<br><br>";
-        recentPositions.forEach(pos => {
-          historyHTML += `Timestamp: ${new Date(pos.timestamp).toLocaleString()}<br>` +
-                         `Latitude: ${pos.latitude}<br>` +
-                         `Longitude: ${pos.longitude}<br><br>`;
-        });
-        historyListDiv.innerHTML = historyHTML;
-      } else {
-        historyListDiv.innerHTML = "No history available.<br>";
-      }
-    });
-  }
-
-  // Restore historical positions on load and update displays
-  getAllPositions().then(records => {
-    records.forEach(record => {
-      const marker = L.circleMarker([record.latitude, record.longitude], {
-        radius: 4,
-        color: '#FF0000',
-        fillOpacity: 0.8
-      });
-      marker.timestamp = record.timestamp;
-      marker.latitude = record.latitude;
-      marker.longitude = record.longitude;
-      marker.on('click', function(e) {
-        L.popup()
-          .setLatLng(e.latlng)
-          .setContent(`Coordinates: ${record.latitude.toFixed(5)}, ${record.longitude.toFixed(5)}<br>Timestamp: ${new Date(record.timestamp).toLocaleString()}`)
-          .openOn(map);
-      });
-      marker.addTo(map);
-    });
-    updateDisplays();
-  }).catch(err => console.error('DB Error:', err));
-
-  // Geolocation button handler with section header and line breaks
-  geolocBtn.addEventListener('click', () => {
-    geolocResultDiv.innerHTML = "****************************** GEOLOCATION ******************************<br><br>";
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(position => {
-        const currentTime = new Date().toLocaleString();
-        const { latitude, longitude } = position.coords;
-        geolocResultDiv.innerHTML += `Timestamp: ${currentTime}<br>`;
-        geolocResultDiv.innerHTML += `Device / User Agent: ${getDeviceInfo()}<br>`;
-        geolocResultDiv.innerHTML += `Latitude: ${latitude}<br>`;
-        geolocResultDiv.innerHTML += `Longitude: ${longitude}<br><br>`;
-        localStorage.setItem('geolocResult', geolocResultDiv.innerHTML);
-        updatePosition(latitude, longitude, Date.now());
-      }, error => {
-        geolocResultDiv.innerHTML += `Error: ${error.message}<br>`;
-        localStorage.setItem('geolocResult', geolocResultDiv.innerHTML);
-      });
-    } else {
-      geolocResultDiv.innerHTML += 'Geolocation is not supported.<br>';
-      localStorage.setItem('geolocResult', geolocResultDiv.innerHTML);
-    }
-  });
-
-  // IP lookup button handler with ipify alternative lookup
-  ipBtn.addEventListener('click', () => {
-    ipResultDiv.innerHTML = "**************** IP LOOKUP **********************<br><br>";
-    // First, call your local API endpoint
+  document.getElementById("ipBtn").onclick=()=>{
     fetch('/api/ip')
-      .then(response => response.json())
-      .then(data => {
-        const currentTime = new Date().toLocaleString();
-        ipResultDiv.innerHTML += `Timestamp: ${currentTime}<br>`;
-        ipResultDiv.innerHTML += `Device / User Agent: ${getDeviceInfo()}<br>`;
-        ipResultDiv.innerHTML += `Local IP: ${data.ip}<br><br>`;
-        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
-        // Then, call ipify to get the public IP
-        return fetch('https://api.ipify.org?format=json');
-      })
-      .then(response => response.json())
-      .then(data => {
-        ipResultDiv.innerHTML += `IPify Public IP: ${data.ip}<br><br>`;
-        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
-      })
-      .catch(error => {
-        ipResultDiv.innerHTML += `Error: ${error.message}<br>`;
-        localStorage.setItem('ipResult', ipResultDiv.innerHTML);
+    .then(r=>r.json())
+    .then(d=>{
+      return fetch('https://api.ipify.org?format=json')
+      .then(r=>r.json())
+      .then(pub=>{
+        let txt=
+`**************** IP LOOKUP **********************
+
+Timestamp: ${new Date().toLocaleString()}
+Device / User Agent: ${navigator.userAgent}
+Local IP: ${d.ip}
+Public IP: ${pub.ip}
+`;
+        localStorage.setItem("ipResult",txt);
       });
-  });
+    });
+  };
 
-  // Compass controls: start and stop sensors
-  compassBtn.addEventListener('click', () => {
+  document.getElementById("compassBtn").onclick=()=>{
     startSensors();
-    compassBtn.style.display = 'none';
-    stopCompassBtn.style.display = 'block';
-  });
-  stopCompassBtn.addEventListener('click', () => {
+    document.getElementById("compassBtn").style.display="none";
+    document.getElementById("stopCompassBtn").style.display="block";
+  };
+
+  document.getElementById("stopCompassBtn").onclick=()=>{
     stopSensors();
-    compassBtn.style.display = 'block';
-    stopCompassBtn.style.display = 'none';
-    if (compassOverlay) {
-      compassOverlay.textContent = '--°';
-      compassOverlay.style.transform = 'rotate(0deg)';
-      localStorage.setItem('compassValue', '--°');
-    }
-  });
+    document.getElementById("compassBtn").style.display="block";
+    document.getElementById("stopCompassBtn").style.display="none";
+  };
 
-  // Start Online Navigation button handler
-  startNavBtn.addEventListener('click', () => {
-    if (currentMarker) {
-      const latLng = currentMarker.getLatLng();
-      const lat = latLng.lat;
-      const lng = latLng.lng;
-      const ua = navigator.userAgent.toLowerCase();
-      // Android: use geo URI scheme
-      if (ua.indexOf("android") > -1) {
-        window.location.href = `geo:${lat},${lng}?q=${lat},${lng}(Destination)`;
-      }
-      // iOS: use Apple Maps URL scheme
-      else if (ua.indexOf("iphone") > -1 || ua.indexOf("ipad") > -1) {
-        window.location.href = `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
-      }
-      // Fallback: open Google Maps in a new tab
-      else {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
-      }
-    } else {
-      alert("No location available for navigation.");
-    }
-  });
+  document.getElementById("startNavBtn").onclick=()=>{
+    if(!currentMarker) return alert("No location");
+    const {lat,lng}=currentMarker.getLatLng();
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,'_blank');
+  };
 
-  // Clear button: clear outputs, markers, and IndexedDB; also clear persisted data
-  clearBtn.addEventListener('click', () => {
-    geolocResultDiv.textContent = '';
-    ipResultDiv.textContent = '';
-    document.getElementById('navResult').textContent = '';
-    historyListDiv.textContent = '';
-    if (currentMarker) currentMarker.remove();
-    historyMarkers.forEach(marker => marker.remove());
-    historyMarkers = [];
-    clearPositions().then(() => updateDisplays());
-    localStorage.removeItem('geolocResult');
-    localStorage.removeItem('ipResult');
-    localStorage.removeItem('navResult');
-    localStorage.removeItem('compassValue');
-  });
+  document.getElementById("clearBtn").onclick=()=>{
+    clearPositions();
+    historyMarkers.forEach(m=>m.remove());
+    historyMarkers=[];
+    localStorage.clear();
+    dataDisplay.textContent="";
+  };
+
+  document.getElementById("showDataBtn").onclick=async()=>{
+
+    const nav=buildNavInfo();
+    const history=await buildHistory();
+
+    dataDisplay.textContent =
+(localStorage.getItem("geolocResult")||"")+
+"\n"+
+(nav||"")+
+"\n"+
+history;
+  };
+
+  function buildNavInfo(){
+    let s="**************** NAVIGATION ****************\n";
+    if(lastOrientation)
+      s+=`Compass Heading: ${Math.round(lastOrientation.alpha)}°\n`;
+    else s+="Compass: N/A\n";
+
+    if(lastMotion && lastMotion.acceleration)
+      s+=`Motion detected\n`;
+    else s+="Motion: N/A\n";
+
+    if(batteryStatus)
+      s+=`Battery: ${Math.round(batteryStatus.level*100)}%\n`;
+    else s+="Battery: N/A\n";
+
+    return s;
+  }
+
+  async function buildHistory(){
+    const rows=await getAllPositions();
+    if(!rows.length) return "No history\n";
+    rows.sort((a,b)=>b.timestamp-a.timestamp);
+    let out="*************** HISTORY ***************\n\n";
+    rows.slice(0,20).forEach(r=>{
+      out+=
+`Timestamp: ${new Date(r.timestamp).toLocaleString()}
+Latitude: ${r.latitude}
+Longitude: ${r.longitude}
+
+`;
+    });
+    return out;
+  }
+
 });
