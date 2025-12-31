@@ -2,51 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nali Nav - 哪里</title>
-  <script defer src="https://analytics.kahiether.com/script.js" data-website-id="0fa7c572-1545-494e-a38e-f960dbb2c86b"></script>
-  <script defer src="https://kizuna.kahiether.com/main.js?website-url=https://yoursite.com&personalinfostored=no&enablemdquizz=yes&enablejssandbox=no&enableprivacy=yes"></script>
+  <title> Nali Nav - 哪里</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Local Leaflet CSS -->
-  <link rel="stylesheet" href="leaflet.css" />
-  <!-- Injected styles via style.js -->
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="leaflet.css">
+
+  <!-- App styles -->
   <script src="styles.js"></script>
-  <link rel="manifest" href="manifest.json" />
+
+  <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
-  <!-- Burger button placed outside the sidebar so it remains visible on mobile -->
+
+  <!-- Burger -->
   <button id="burger-btn">&#9776;</button>
 
-  <!-- Sidebar for controls -->
-  <nav id="sidebar">
-    <img src="logo.webp" id="logo" alt="Logo">
-    <h2>Nali Nav - 哪里</h2>
-    <button id="geolocBtn">Get Geolocation</button>
-    <button id="ipBtn">Get IP Address</button>
-    <button id="compassBtn">Start Compass</button>
-    <button id="stopCompassBtn" style="display:none;">Stop Compass</button>
-    <button id="startNavBtn">Start GMaps online Navigation</button>
-    <button id="clearBtn">Clear All</button>
-    <div id="compassDisplay">
-      <p>Compass: <span id="compassValue">--°</span></p>
-    </div>
-  </nav>
+  <!-- Map -->
+  <div id="map"></div>
 
-  <!-- Main content: Map and Results -->
-  <div id="content">
-    <div id="map"></div>
-    <div id="results">
-      <div id="geolocResult" style="white-space: pre-wrap;"></div>
-      <div id="ipResult" style="white-space: pre-wrap;"></div>
-      <div id="navResult" style="white-space: pre-wrap; font-family: monospace; padding: 10px;"></div>
-      <div id="historyList" style="white-space: pre-wrap; padding: 10px; border-top: 1px solid #555;"></div>
+  <!-- Compass Overlay -->
+  <div id="compassOverlay">--°</div>
+
+  <!-- Modal -->
+  <div id="controlModal" class="modal">
+    <div class="modal-content">
+
+      <span id="closeModal" class="close">&times;</span>
+
+      <h2>Nali Nav · Control Panel</h2>
+
+      <button id="geolocBtn">Get Geolocation</button>
+      <button id="ipBtn">Get IP</button>
+      <button id="compassBtn">Start Compass</button>
+      <button id="stopCompassBtn" style="display:none;">Stop Compass</button>
+      <button id="startNavBtn">Start Navigation</button>
+      <button id="clearBtn">Clear All</button>
+
+      <button id="showDataBtn">Show Data & History</button>
+
+      <pre id="dataDisplay"></pre>
+
     </div>
   </div>
 
-  <!-- Local Leaflet JS -->
+  <!-- Leaflet -->
   <script src="leaflet.js"></script>
-  <!-- IndexedDB functions -->
-  <script src="db.js"></script>
-  <!-- Main application code -->
+
+  <!-- Main -->
   <script src="main.js"></script>
+
 </body>
 </html>
