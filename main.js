@@ -1,7 +1,7 @@
 // ================== CONFIG ==================
 const APP_CONFIG = {
   GEOLOCATION_INTERVAL_MS: 5 * 60 * 1000,   // default 5 min
-  SHOW_COUNTRY_LABELS: true,
+  SHOW_COUNTRY_LABELS: false,
   HISTORY_OVERLAY_COUNT: 5
 };
 
