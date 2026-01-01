@@ -453,8 +453,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const dataDisplay = document.getElementById('dataDisplay');
 
   burgerBtn.addEventListener('click', () => {
-    modal.style.display = 'block';
+    if (modal.style.display === 'block') {
+      modal.style.display = 'none';
+    } else {
+      modal.style.display = 'block';
+    }
   });
+
 
   closeModal.addEventListener('click', () => {
     modal.style.display = 'none';
