@@ -11,9 +11,14 @@
     html, body {
       width: 100%;
       height: 100%;
-      background-color: #111;
+      background-color: #0c0f18; /* very dark blue sea background */
       color: #eee;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Force Leaflet background to dark sea */
+    .leaflet-container {
+      background: #0c0f18 !important;
     }
 
     /* Fullscreen map */
@@ -22,11 +27,12 @@
       height: 100vh;
     }
 
-    /* Burger button */
+    /* 🔵 BURGER BUTTON CENTERED */
     #burger-btn {
       position: fixed;
       top: 10px;
-      left: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 11000;
       font-size: 24px;
       padding: 10px 14px;
@@ -67,7 +73,7 @@
       font-size: 14px;
       font-weight: 600;
       color: #fff;
-      background-color: rgba(180, 0, 0, 0.85); /* default OFF = red-ish */
+      background-color: rgba(180, 0, 0, 0.85);
       z-index: 11000;
     }
 
@@ -85,10 +91,10 @@
       line-height: 1.4;
       z-index: 11000;
       font-family: monospace;
-      pointer-events: none; /* don't block map interactions */
+      pointer-events: none;
     }
 
-    /* Modal base */
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -117,7 +123,6 @@
       margin-bottom: 10px;
     }
 
-    /* Buttons (global) */
     button {
       padding: 14px;
       margin: 8px 0;
@@ -129,6 +134,7 @@
       cursor: pointer;
       transition: background-color 0.2s ease, transform 0.1s ease;
       display: inline-block;
+      width: 100%;
     }
 
     button:hover {
@@ -140,19 +146,12 @@
       transform: translateY(0);
     }
 
-    /* Buttons inside modal */
-    .modal-content button {
-      width: 100%;
-      display: block;
-    }
-
     .close {
       float: right;
       font-size: 28px;
       cursor: pointer;
     }
 
-    /* Data text area in modal */
     #dataDisplay {
       margin-top: 15px;
       font-family: monospace;
@@ -160,20 +159,17 @@
       font-size: 13px;
     }
 
-    /* Country labels (names on map) */
+    /* 🏷️ COUNTRY LABELS WHITE + THIN */
     .country-label {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 11px;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 12px;
       font-weight: 200;
-      text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+      text-shadow: 0 0 4px rgba(0, 0, 0, 1);
       pointer-events: none;
       white-space: nowrap;
     }
 
     @media (max-width: 768px) {
-      #map {
-        height: 100vh;
-      }
       #latestPositionsOverlay {
         max-width: 80%;
       }
