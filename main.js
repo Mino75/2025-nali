@@ -1,3 +1,12 @@
+// ================== CONFIG ==================
+const APP_CONFIG = {
+  GEOLOCATION_INTERVAL_MS: 5 * 60 * 1000,   // default 5 min
+  SHOW_COUNTRY_LABELS: true,
+  HISTORY_OVERLAY_COUNT: 5
+};
+
+
+
 // ================== IndexedDB Layer ==================
 const DB_NAME = 'PositionDB';
 const DB_VERSION = 2;              // upgrade, but keep existing store
@@ -196,7 +205,7 @@ fetch('countries.geojson')
         // Label at center (transparent / thin font)
         try {
           const center = layer.getBounds().getCenter();
-          if (feature.properties && feature.properties.name) {
+          if (APP_CONFIG.SHOW_COUNTRY_LABELS && feature.properties && feature.properties.name) {
             L.marker(center, {
               icon: L.divIcon({
                 className: 'country-label',
@@ -251,7 +260,7 @@ function startOfflineNavigation() {
   // Poll every 5 minutes
   offlineNavInterval = setInterval(() => {
     requestGeolocationAndUpdate();
-  }, 5 * 60 * 1000);
+  }, APP_CONFIG.GEOLOCATION_INTERVAL_MS);
 }
 
 function stopOfflineNavigation() {
@@ -563,21 +572,20 @@ Error: ${err.message}
   });
 
   // Show Data & History in modal
-  showDataBtn.addEventListener('click', async () => {
-    const geoloc = localStorage.getItem('geolocResult') || '';
-    const nav = localStorage.getItem('navResult') || navInfoText || '';
-    const ip = localStorage.getItem('ipResult') || '';
-    const history = await buildHistoryText();
+let dataVisible = false;
 
-    const fullText =
-`${geoloc}
+showDataBtn.addEventListener('click', async () => {
+  if (dataVisible) {
+    dataDisplay.textContent = '';
+    dataVisible = false;
+    return;
+  }
 
-${ip}
+  const geoloc = localStorage.getItem('geolocResult') || '';
+  const nav = localStorage.getItem('navResult') || navInfoText || '';
+  const ip = localStorage.getItem('ipResult') || '';
+  const history = await buildHistoryText();
 
-${nav}
-
-${history}
-`;
-    dataDisplay.textContent = fullText;
-  });
+  dataDisplay.textContent = `${geoloc}\n\n${ip}\n\n${nav}\n\n${history}`;
+  dataVisible = true;
 });
