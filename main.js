@@ -592,5 +592,7 @@ showDataBtn.addEventListener('click', async () => {
   const history = await buildHistoryText();
 
   dataDisplay.textContent = `${geoloc}\n\n${ip}\n\n${nav}\n\n${history}`;
-  dataVisible = true;
+    dataVisible = true;
 });
+});
+
