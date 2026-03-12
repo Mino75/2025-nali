@@ -140,7 +140,7 @@ button{
   color:#dce7ff;
   opacity:.85;
   font-weight:300;
-  font-size:13px;
+  font-size:18px;
 }
 
 .capital-label{
