@@ -15,10 +15,10 @@ const APP_CONFIG = {
   
   LABEL_LAYERS: {
     continents: { enabled: true, minZoom: 2, maxZoom: 3 },
-    seas: { enabled: true, minZoom: 3, maxZoom: 6 },
+    seas: { enabled: true, minZoom: 6, maxZoom: 10 },
     countries: { enabled: true, minZoom:6, maxZoom: 10 },
-    mountains: { enabled: true, minZoom: 4, maxZoom: 10 },
-    capitals: { enabled: true, minZoom: 7, maxZoom: 10 }
+    mountains: { enabled: true, minZoom: 6, maxZoom: 10 },
+    capitals: { enabled: true, minZoom: 5, maxZoom: 10 }
   }
 };
 
