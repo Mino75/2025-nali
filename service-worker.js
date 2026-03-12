@@ -84,6 +84,7 @@ const ASSETS = [
   '/land.geojson',
   '/countries.geojson',
   '/continents.json',
+  '/countries.json',
   '/seas_and_major_marine_regions.json',
   '/major_mountain_ranges.json',
   '/capitals.json',
