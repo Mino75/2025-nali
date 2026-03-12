@@ -199,4 +199,4 @@ All rights reserved.
 
 🌏 **那里 Nali** - Where in the world are you? 📍
 
-Made with ❤️ using open-source technologies and public domain data
+Made using open-source technologies and public domain data
