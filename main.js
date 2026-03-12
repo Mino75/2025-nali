@@ -338,17 +338,6 @@ if (isLayerVisible('mountains', zoom)) {
   });
 }
 
-if (isLayerVisible('seas', zoom)) {
-  seasData.forEach(item => {
-    const [name, type, lat, lng] = item;
-    if (bounds.contains([lat, lng])) {
-      addTextLabel(
-        lat, lng, name, 'sea-label', labelLayers.seas,
-        APP_CONFIG.LABEL_PREFIXES.seas
-      );
-    }
-  });
-}
 
   if (isLayerVisible('seas', zoom)) {
     seasData.forEach(item => {
@@ -372,13 +361,6 @@ fetch('countries.geojson')
         color: '#3388ff',
         weight: 1,
         fillOpacity: 0.2
-      },
-  //    onEachFeature: (feature, layer) => {
-  //      if (feature.properties && feature.properties.name) {
-  //        layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
-  //      }
-
-// no country label anchor from polygon bounds anymore
       }
     }).addTo(map);
 
@@ -524,7 +506,7 @@ function refreshLatestPositionsOverlay() {
         return;
       }
       positions.sort((a, b) => b.timestamp - a.timestamp);
-      const recent = positions.slice(0, 5);
+      const recent = positions.slice(0, APP_CONFIG.HISTORY_OVERLAY_COUNT);
       let txt = 'Last positions:\n\n';
       recent.forEach(p => {
         txt += `${new Date(p.timestamp).toLocaleTimeString()} | ${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}\n`;
