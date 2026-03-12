@@ -83,6 +83,8 @@ const ASSETS = [
   '/logo.webp',
   '/land.geojson',
   '/countries.geojson',
+  '/continents.json',
+  '/capitals.json',
   '/manifest.json',
   '/favicon.ico',
   '/icon-192x192.png',
