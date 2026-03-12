@@ -116,11 +116,54 @@ button{
   font-size:16px;
 }
 
+.continent-label,
+.country-label,
+.capital-label,
+.mountain-label,
+.sea-label{
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  white-space:nowrap;
+  pointer-events:none;
+  text-shadow:0 0 4px #000, 0 0 8px #000;
+}
+
+.continent-label{
+  color:#ffffff;
+  opacity:.95;
+  font-weight:700;
+  font-size:18px;
+}
+
 .country-label{
-  color:#fff;
-  opacity:.8;
-  font-weight:200;
-  text-shadow:0 0 4px #000;
+  color:#dce7ff;
+  opacity:.85;
+  font-weight:300;
+  font-size:13px;
+}
+
+.capital-label{
+  color:#ffe7a3;
+  opacity:.95;
+  font-weight:600;
+  font-size:12px;
+}
+
+.mountain-label{
+  color:#d6d6d6;
+  opacity:.9;
+  font-style:italic;
+  font-weight:500;
+  font-size:12px;
+}
+
+.sea-label{
+  color:#7fd4ff;
+  opacity:.9;
+  font-style:italic;
+  font-weight:400;
+  font-size:13px;
 }
 `;
   document.head.appendChild(style);
