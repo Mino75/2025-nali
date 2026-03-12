@@ -193,39 +193,171 @@ function stopSensors() {
 // ================== Map & Layers ==================
 const map = L.map('map').setView([20, 0], 2);
 
-// Load countries GeoJSON + labels
+// Persistent polygon layer for countries
+let countriesGeoJsonLayer = null;
+
+// Dynamic label layer groups
+const labelLayers = {
+  continents: L.layerGroup().addTo(map),
+  countries: L.layerGroup().addTo(map),
+  capitals: L.layerGroup().addTo(map),
+  mountains: L.layerGroup().addTo(map),
+  seas: L.layerGroup().addTo(map)
+};
+
+// Data stores
+let continentsData = [];
+let countriesLabelData = [];
+let capitalsData = [];
+let mountainsData = [];
+let seasData = [];
+
+// Helpers
+function isLayerVisible(layerKey, zoom) {
+  const cfg = APP_CONFIG.LABEL_LAYERS[layerKey];
+  if (!cfg || !cfg.enabled) return false;
+  if (typeof cfg.minZoom === 'number' && zoom < cfg.minZoom) return false;
+  if (typeof cfg.maxZoom === 'number' && zoom > cfg.maxZoom) return false;
+  return true;
+}
+
+function clearDynamicLabelLayers() {
+  Object.values(labelLayers).forEach(layer => layer.clearLayers());
+}
+
+function addTextLabel(lat, lng, text, className, targetLayer) {
+  if (lat == null || lng == null || !text) return;
+
+  L.marker([lat, lng], {
+    interactive: false,
+    keyboard: false,
+    icon: L.divIcon({
+      className,
+      html: text
+    })
+  }).addTo(targetLayer);
+}
+
+function refreshDynamicLabels() {
+  const zoom = map.getZoom();
+  const bounds = map.getBounds();
+
+  clearDynamicLabelLayers();
+
+  if (isLayerVisible('continents', zoom)) {
+    continentsData.forEach(item => {
+      const [name, lat, lng] = item;
+      if (bounds.contains([lat, lng])) {
+        addTextLabel(lat, lng, name, 'continent-label', labelLayers.continents);
+      }
+    });
+  }
+
+  if (isLayerVisible('countries', zoom)) {
+    countriesLabelData.forEach(item => {
+      const [name, lat, lng] = item;
+      if (bounds.contains([lat, lng])) {
+        addTextLabel(lat, lng, name, 'country-label', labelLayers.countries);
+      }
+    });
+  }
+
+  if (isLayerVisible('capitals', zoom)) {
+    capitalsData.forEach(item => {
+      const [name, iso2, lat, lng] = item;
+      if (bounds.contains([lat, lng])) {
+        addTextLabel(lat, lng, name, 'capital-label', labelLayers.capitals);
+      }
+    });
+  }
+
+  if (isLayerVisible('mountains', zoom)) {
+    mountainsData.forEach(item => {
+      const [name, region, lat, lng] = item;
+      if (bounds.contains([lat, lng])) {
+        addTextLabel(lat, lng, name, 'mountain-label', labelLayers.mountains);
+      }
+    });
+  }
+
+  if (isLayerVisible('seas', zoom)) {
+    seasData.forEach(item => {
+      const [name, type, lat, lng] = item;
+      if (bounds.contains([lat, lng])) {
+        addTextLabel(lat, lng, name, 'sea-label', labelLayers.seas);
+      }
+    });
+  }
+}
+
+// Load countries GeoJSON
 fetch('countries.geojson')
   .then(r => r.json())
   .then(data => {
-    L.geoJSON(data, {
+    countriesGeoJsonLayer = L.geoJSON(data, {
       style: {
         color: '#3388ff',
         weight: 1,
         fillOpacity: 0.2
       },
       onEachFeature: (feature, layer) => {
-        // Popup standard
         if (feature.properties && feature.properties.name) {
           layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
         }
-        // Label at center (transparent / thin font)
+
         try {
           const center = layer.getBounds().getCenter();
-          if (APP_CONFIG.SHOW_COUNTRY_LABELS && feature.properties && feature.properties.name) {
-            L.marker(center, {
-              icon: L.divIcon({
-                className: 'country-label',
-                html: feature.properties.name
-              })
-            }).addTo(map);
+          if (feature.properties && feature.properties.name) {
+            countriesLabelData.push([
+              feature.properties.name,
+              center.lat,
+              center.lng
+            ]);
           }
         } catch (e) {
-          // ignore if bounds not valid
+          // ignore invalid bounds
         }
       }
     }).addTo(map);
+
+    refreshDynamicLabels();
   })
   .catch(err => console.error('Error loading countries.geojson:', err));
+
+// Load lightweight label datasets
+fetch('continents.json')
+  .then(r => r.json())
+  .then(data => {
+    continentsData = data || [];
+    refreshDynamicLabels();
+  })
+  .catch(err => console.error('Error loading continents.json:', err));
+
+fetch('capitals.json')
+  .then(r => r.json())
+  .then(data => {
+    capitalsData = data || [];
+    refreshDynamicLabels();
+  })
+  .catch(err => console.error('Error loading capitals.json:', err));
+
+fetch('major_mountain_ranges.json')
+  .then(r => r.json())
+  .then(data => {
+    mountainsData = data || [];
+    refreshDynamicLabels();
+  })
+  .catch(err => console.error('Error loading major_mountain_ranges.json:', err));
+
+fetch('seas_and_major_marine_regions.json')
+  .then(r => r.json())
+  .then(data => {
+    seasData = data || [];
+    refreshDynamicLabels();
+  })
+  .catch(err => console.error('Error loading seas_and_major_marine_regions.json:', err));
+
+map.on('zoomend moveend', refreshDynamicLabels);
 
 // Markers & overlays
 let currentMarker = null;
@@ -297,6 +429,9 @@ function updatePosition(lat, lng, timestamp) {
   }).addTo(map);
 
   historyMarkers.push(historyMarker);
+
+  refreshDynamicLabels();
+
 
   const record = { latitude: lat, longitude: lng, timestamp };
   addPosition(record)
