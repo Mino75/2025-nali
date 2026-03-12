@@ -1,10 +1,16 @@
 // ================== CONFIG ==================
 const APP_CONFIG = {
-  GEOLOCATION_INTERVAL_MS: 5 * 60 * 1000,   // default 5 min
-  SHOW_COUNTRY_LABELS: false,
-  HISTORY_OVERLAY_COUNT: 5
-};
+  GEOLOCATION_INTERVAL_MS: 5 * 60 * 1000,
+  HISTORY_OVERLAY_COUNT: 5,
 
+  LABEL_LAYERS: {
+    continents: { enabled: true, minZoom: 2, maxZoom: 3 },
+    seas: { enabled: true, minZoom: 3, maxZoom: 6 },
+    countries: { enabled: true, minZoom: 4, maxZoom: 6 },
+    mountains: { enabled: true, minZoom: 4, maxZoom: 7 },
+    capitals: { enabled: true, minZoom: 5, maxZoom: 10 }
+  }
+};
 
 
 // ================== IndexedDB Layer ==================
