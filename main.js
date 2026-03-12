@@ -2,7 +2,17 @@
 const APP_CONFIG = {
   GEOLOCATION_INTERVAL_MS: 5 * 60 * 1000,
   HISTORY_OVERLAY_COUNT: 5,
+  MOUSE_COORDINATES_DECIMALS: 5,
+  CLICK_COORDINATE_MARKER: true,
 
+  LABEL_PREFIXES: {
+    continents: '🌍 ',
+    countries: '🗺️ ',
+    capitals: '🏙️ ',
+    mountains: '🏔️ ',
+    seas: '🌊 '
+  },
+  
   LABEL_LAYERS: {
     continents: { enabled: true, minZoom: 2, maxZoom: 3 },
     seas: { enabled: true, minZoom: 3, maxZoom: 6 },
@@ -191,7 +201,43 @@ function stopSensors() {
 }
 
 // ================== Map & Layers ==================
-const map = L.map('map').setView([20, 0], 2);
+const mapconst map = L.map('map', {
+  worldCopyJump: true,
+  minZoom: 2,
+  maxZoom: 18,
+  maxBounds: [[-85, -180], [85, 180]],
+  maxBoundsViscosity: 1.0
+}).setView([20, 0], 2);
+
+const mouseCoordsOverlay = L.control({ position: 'bottomleft' });
+
+mouseCoordsOverlay.onAdd = function () {
+  const div = L.DomUtil.create('div', 'mouse-coords-overlay');
+  div.textContent = 'Lat: --, Lng: --';
+  return div;
+};
+mouseCoordsOverlay.addTo(map);
+
+let clickCoordinateMarker = null;
+
+map.on('click', (e) => {
+  if (!APP_CONFIG.CLICK_COORDINATE_MARKER) return;
+
+  if (clickCoordinateMarker) {
+    map.removeLayer(clickCoordinateMarker);
+  }
+
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+
+  clickCoordinateMarker = L.marker([lat, lng]).addTo(map)
+    .bindPopup(
+      `<strong>COORDINATES</strong><br>` +
+      `Lat: ${lat.toFixed(APP_CONFIG.MOUSE_COORDINATES_DECIMALS)}<br>` +
+      `Lng: ${lng.toFixed(APP_CONFIG.MOUSE_COORDINATES_DECIMALS)}`
+    )
+    .openPopup();
+});
 
 // Persistent polygon layer for countries
 let countriesGeoJsonLayer = null;
@@ -225,7 +271,7 @@ function clearDynamicLabelLayers() {
   Object.values(labelLayers).forEach(layer => layer.clearLayers());
 }
 
-function addTextLabel(lat, lng, text, className, targetLayer) {
+function addTextLabel(lat, lng, text, className, targetLayer, prefix = '') {
   if (lat == null || lng == null || !text) return;
 
   L.marker([lat, lng], {
@@ -233,7 +279,7 @@ function addTextLabel(lat, lng, text, className, targetLayer) {
     keyboard: false,
     icon: L.divIcon({
       className,
-      html: text
+      html: `${prefix}${text}`
     })
   }).addTo(targetLayer);
 }
@@ -248,7 +294,10 @@ function refreshDynamicLabels() {
     continentsData.forEach(item => {
       const [name, lat, lng] = item;
       if (bounds.contains([lat, lng])) {
-        addTextLabel(lat, lng, name, 'continent-label', labelLayers.continents);
+        addTextLabel(
+          lat, lng, name, 'continent-label', labelLayers.continents,
+          APP_CONFIG.LABEL_PREFIXES.continents
+        );
       }
     });
   }
@@ -257,7 +306,10 @@ function refreshDynamicLabels() {
     countriesLabelData.forEach(item => {
       const [name, lat, lng] = item;
       if (bounds.contains([lat, lng])) {
-        addTextLabel(lat, lng, name, 'country-label', labelLayers.countries);
+        addTextLabel(
+          lat, lng, name, 'country-label', labelLayers.countries,
+          APP_CONFIG.LABEL_PREFIXES.countries
+        );
       }
     });
   }
@@ -266,7 +318,10 @@ function refreshDynamicLabels() {
     capitalsData.forEach(item => {
       const [name, iso2, lat, lng] = item;
       if (bounds.contains([lat, lng])) {
-        addTextLabel(lat, lng, name, 'capital-label', labelLayers.capitals);
+        addTextLabel(
+          lat, lng, name, 'capital-label', labelLayers.capitals,
+          APP_CONFIG.LABEL_PREFIXES.capitals
+        );
       }
     });
   }
@@ -275,16 +330,20 @@ function refreshDynamicLabels() {
     mountainsData.forEach(item => {
       const [name, region, lat, lng] = item;
       if (bounds.contains([lat, lng])) {
-        addTextLabel(lat, lng, name, 'mountain-label', labelLayers.mountains);
-      }
-    });
+      addTextLabel(
+        lat, lng, name, 'mountain-label', labelLayers.mountains,
+        APP_CONFIG.LABEL_PREFIXES.mountains
+      );
   }
 
   if (isLayerVisible('seas', zoom)) {
     seasData.forEach(item => {
       const [name, type, lat, lng] = item;
       if (bounds.contains([lat, lng])) {
-        addTextLabel(lat, lng, name, 'sea-label', labelLayers.seas);
+        addTextLabel(
+          lat, lng, name, 'sea-label', labelLayers.seas,
+          APP_CONFIG.LABEL_PREFIXES.seas
+        );
       }
     });
   }
@@ -301,22 +360,11 @@ fetch('countries.geojson')
         fillOpacity: 0.2
       },
       onEachFeature: (feature, layer) => {
-        if (feature.properties && feature.properties.name) {
-          layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
+  //      if (feature.properties && feature.properties.name) {
+  //        layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
         }
 
-        try {
-          const center = layer.getBounds().getCenter();
-          if (feature.properties && feature.properties.name) {
-            countriesLabelData.push([
-              feature.properties.name,
-              center.lat,
-              center.lng
-            ]);
-          }
-        } catch (e) {
-          // ignore invalid bounds
-        }
+// no country label anchor from polygon bounds anymore
       }
     }).addTo(map);
 
@@ -332,6 +380,17 @@ fetch('continents.json')
     refreshDynamicLabels();
   })
   .catch(err => console.error('Error loading continents.json:', err));
+
+fetch('countries.json')
+  .then(r => r.json())
+  .then(data => {
+    countriesLabelData = (data || []).map(item => {
+      const [name, iso2, lat, lng] = item;
+      return [name, lat, lng];
+    });
+    refreshDynamicLabels();
+  })
+  .catch(err => console.error('Error loading countries.json:', err));
 
 fetch('capitals.json')
   .then(r => r.json())
