@@ -66,7 +66,7 @@ function addPosition(position) {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_POSITIONS, 'readwrite');
       const store = tx.objectStore(STORE_POSITIONS);
-      const req = store.add(position);
+      const req = store.put(position);
       req.onsuccess = () => resolve();
       req.onerror = ev => reject(ev.target.error);
     });
@@ -201,7 +201,7 @@ function stopSensors() {
 }
 
 // ================== Map & Layers ==================
-const mapconst map = L.map('map', {
+const map = L.map('map', {
   worldCopyJump: true,
   minZoom: 2,
   maxZoom: 18,
@@ -326,15 +326,29 @@ function refreshDynamicLabels() {
     });
   }
 
-  if (isLayerVisible('mountains', zoom)) {
-    mountainsData.forEach(item => {
-      const [name, region, lat, lng] = item;
-      if (bounds.contains([lat, lng])) {
+if (isLayerVisible('mountains', zoom)) {
+  mountainsData.forEach(item => {
+    const [name, region, lat, lng] = item;
+    if (bounds.contains([lat, lng])) {
       addTextLabel(
         lat, lng, name, 'mountain-label', labelLayers.mountains,
         APP_CONFIG.LABEL_PREFIXES.mountains
       );
-  }
+    }
+  });
+}
+
+if (isLayerVisible('seas', zoom)) {
+  seasData.forEach(item => {
+    const [name, type, lat, lng] = item;
+    if (bounds.contains([lat, lng])) {
+      addTextLabel(
+        lat, lng, name, 'sea-label', labelLayers.seas,
+        APP_CONFIG.LABEL_PREFIXES.seas
+      );
+    }
+  });
+}
 
   if (isLayerVisible('seas', zoom)) {
     seasData.forEach(item => {
@@ -359,10 +373,10 @@ fetch('countries.geojson')
         weight: 1,
         fillOpacity: 0.2
       },
-      onEachFeature: (feature, layer) => {
+  //    onEachFeature: (feature, layer) => {
   //      if (feature.properties && feature.properties.name) {
   //        layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
-        }
+  //      }
 
 // no country label anchor from polygon bounds anymore
       }
