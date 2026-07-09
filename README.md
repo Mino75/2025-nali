@@ -4,7 +4,7 @@
 
 ## 📍 About the Name
 
-The app is named **Nali** (那里), which means "where" or "there" in Chinese, perfectly capturing the essence of this location-tracking application. Just as the word helps answer the question "where?", this app helps you discover and track where you are in the world.
+The app is named **Nali** (那里), which means "where" or "there" in Chinese, capturing the essence of this location-tracking application. Just as the word helps answer the question "where?", this app helps you discover and track where you are in the world.
 
 ## ✨ Features
 
@@ -134,7 +134,7 @@ SW_ENABLE_LOGS=true
 
 ## 📱 PWA Support
 
-The application is a fully functional Progressive Web App with:
+The application is Progressive Web App with:
 
 - ✅ Offline capability
 - ✅ Install prompt
